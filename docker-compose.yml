@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  arr_folder_renamer:
+    image: arr-folder-renamer:latest
+    container_name: arr_folder_renamer
+    restart: unless-stopped
+    environment:
+      - RUN_SONARR=True
+      - RUN_RADARR=True
+      - WORK_LIMIT=10
+      - DRY_RUN=False
+      - SONARR_URL=http://192.168.1.80:8989
+      - SONARR_API_KEY=xxxxxxx
+      - RADARR_URL=http://192.168.1.80:7878
+      - RADARR_API_KEY=yyyyyyy
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - default
+
+networks:
+  default:
+    driver: bridge
