@@ -14,8 +14,9 @@ services:
       - SONARR_API_KEY=xxxxxxx
       - RADARR_URL=http://192.168.1.80:7878
       - RADARR_API_KEY=yyyyyyy
+      - LOG_DIR=/logs
     volumes:
-      - ./logs:/app/logs
+      - /mnt/user/appdata/arr-folder-renamer:/logs
     networks:
       - default
 
