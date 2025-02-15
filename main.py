@@ -5,19 +5,29 @@ from logging.handlers import RotatingFileHandler
 #from datetime import datetime
 import requests
 
-# Configuration des options
-RUN_SONARR = True  # Activer/désactiver le traitement des séries Sonarr
-RUN_RADARR = True  # Activer/désactiver le traitement des films Radarr
-WORK_LIMIT = 10     # Limiter le nombre de modifications (0 pour illimité)
-DRY_RUN = False    # Mode simulation (True = pas de modifications réelles)
 
+# Charger les variables d'environnement
+RUN_SONARR = os.getenv("RUN_SONARR", "True").lower() == "true" # Activer/désactiver le traitement des séries Sonarr
+RUN_RADARR = os.getenv("RUN_RADARR", "True").lower() == "true" # Activer/désactiver le traitement des films Radarr
+WORK_LIMIT = int(os.getenv("WORK_LIMIT", "10")) # Limiter le nombre de modifications (0 pour illimité)
+DRY_RUN = os.getenv("DRY_RUN", "False").lower() == "true" # Mode simulation (True = pas de modifications réelles)
+ 
 # Paramètres Sonarr
-SONARR_URL = "http://192.168.1.80:8989"    # URL de votre instance Sonarr
-SONARR_API_KEY = "xxxxxxxxxxxxxxxxxxxx"        # Clé API de Sonarr
-
+SONARR_URL = os.getenv("SONARR_URL", "http://localhost:8989") # URL de votre instance Sonarr
+SONARR_API_KEY = os.getenv("SONARR_API_KEY", "") # Clé API de Sonarr
 # Paramètres Radarr
-RADARR_URL = "http://192.168.1.80:7878"    # URL de votre instance Radarr
-RADARR_API_KEY = "yyyyyyyyyyyyyyyyyyyyyyy"        # Clé API de Radarr
+RADARR_URL = os.getenv("RADARR_URL", "http://localhost:7878") # URL de votre instance Radarr
+RADARR_API_KEY = os.getenv("RADARR_API_KEY", "") # Clé API de Radarr
+
+# Vérifier que les clés API sont bien définies
+if not SONARR_API_KEY or not RADARR_API_KEY:
+    raise ValueError("Les clés API SONARR_API_KEY et RADARR_API_KEY doivent être définies dans les variables d'environnement.")
+
+
+
+
+
+
 
 def update_sonarr_path(original_path, imdb_id, tvdb_id):
     # Si aucun ID n'est disponible, ne pas modifier le path
