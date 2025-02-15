@@ -27,7 +27,5 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           push: true
-          tags: nexius2/arr-folder-renamer:latest
-
-      - name: Image Digest
-        run: echo "Image Digest: ${{ steps.docker_build.outputs.digest }}"
+          tags: |
+            nexius2/arr-folder-renamer:latest
