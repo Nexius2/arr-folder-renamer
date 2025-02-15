@@ -20,6 +20,9 @@ SONARR_API_KEY = os.getenv("SONARR_API_KEY", "") # Clé API de Sonarr
 RADARR_URL = os.getenv("RADARR_URL", "http://localhost:7878") # URL de votre instance Radarr
 RADARR_API_KEY = os.getenv("RADARR_API_KEY", "") # Clé API de Radarr
 
+LOG_DIR = os.getenv("LOG_DIR", "/logs")
+os.makedirs(LOG_DIR, exist_ok=True)
+
 # Vérifier que les clés API sont bien définies
 if not SONARR_API_KEY or not RADARR_API_KEY:
     raise ValueError("Les clés API SONARR_API_KEY et RADARR_API_KEY doivent être définies dans les variables d'environnement.")
