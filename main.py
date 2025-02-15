@@ -13,11 +13,11 @@ DRY_RUN = False    # Mode simulation (True = pas de modifications réelles)
 
 # Paramètres Sonarr
 SONARR_URL = "http://192.168.1.80:8989"    # URL de votre instance Sonarr
-SONARR_API_KEY = "xxxxxxxxxxxxxxxx"        # Clé API de Sonarr
+SONARR_API_KEY = "xxxxxxxxxxxxxxxxxxxx"        # Clé API de Sonarr
 
 # Paramètres Radarr
 RADARR_URL = "http://192.168.1.80:7878"    # URL de votre instance Radarr
-RADARR_API_KEY = "yyyyyyyyyyyyyyyyy"        # Clé API de Radarr
+RADARR_API_KEY = "yyyyyyyyyyyyyyyyyyyyyyy"        # Clé API de Radarr
 
 def update_sonarr_path(original_path, imdb_id, tvdb_id):
     # Si aucun ID n'est disponible, ne pas modifier le path
@@ -27,10 +27,10 @@ def update_sonarr_path(original_path, imdb_id, tvdb_id):
     # Construire les segments
     segments = []
     
-    if imdb_id is not None:
+    if imdb_id is not None and str(imdb_id) not in str(original_path):
         segments.append(f"{{imdb-{imdb_id}}}")
 
-    if tvdb_id is not None:
+    if tvdb_id is not None and str(tvdb_id) not in str(original_path):
         segments.append(f"{{tvdb-{tvdb_id}}}")
     
     # Si aucun segment n'est ajouté, retourner le path d'origine
@@ -53,9 +53,9 @@ def update_radarr_path(original_path, imdb_id, tmdb_id):
     # Construire les segments
     segments = []
     
-    if imdb_id is not None:
+    if imdb_id is not None and str(imdb_id) not in str(original_path):
         segments.append(f"{{imdb-{imdb_id}}}")
-    if tmdb_id is not None:
+    if tmdb_id is not None and str(tmdb_id) not in str(original_path):
         segments.append(f"{{tmdb-{tmdb_id}}}")
     
     # Si aucun segment n'est ajouté, retourner le path d'origine
