@@ -37,11 +37,13 @@ def load_config():
     if not os.path.exists(CONFIG_PATH):
         create_default_config()
     config = configparser.ConfigParser()
-    config.read(CONFIG_PATH)
+    try:
+        config.read(CONFIG_PATH)
+    except Exception as e:
+        print(f"Erreur lors du chargement de la configuration: {e}")
+        exit(1)
     return config
-
-try:
-    config = load_config()
+config = load_config()
 
 # Charger les paramètres
 RUN_SONARR = config.getboolean("SETTINGS", "RUN_SONARR")
