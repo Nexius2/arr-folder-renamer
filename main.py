@@ -39,22 +39,23 @@ def load_config():
     config = configparser.ConfigParser()
     try:
         config.read(CONFIG_PATH)
+        return config
     except Exception as e:
         print(f"Erreur lors du chargement de la configuration: {e}")
         exit(1)
-    return config
+
 config = load_config()
 
 # Charger les paramètres
-RUN_SONARR = config.getboolean("SETTINGS", "RUN_SONARR")
-RUN_RADARR = config.getboolean("SETTINGS", "RUN_RADARR")
-WORK_LIMIT = config.getint("SETTINGS", "WORK_LIMIT")
-DRY_RUN = config.getboolean("SETTINGS", "DRY_RUN")
+RUN_SONARR = config.getboolean("SETTINGS", "RUN_SONARR", fallback=True)
+RUN_RADARR = config.getboolean("SETTINGS", "RUN_RADARR", fallback=True)
+WORK_LIMIT = config.getint("SETTINGS", "WORK_LIMIT", fallback=10)
+DRY_RUN = config.getboolean("SETTINGS", "DRY_RUN", fallback=False)
 
-SONARR_URL = config.get("SONARR", "URL")
-SONARR_API_KEY = config.get("SONARR", "API_KEY")
-RADARR_URL = config.get("RADARR", "URL")
-RADARR_API_KEY = config.get("RADARR", "API_KEY")
+SONARR_URL = config.get("SONARR", "URL", fallback="http://localhost:8989")
+SONARR_API_KEY = config.get("SONARR", "API_KEY", fallback="")
+RADARR_URL = config.get("RADARR", "URL", fallback="http://localhost:7878")
+RADARR_API_KEY = config.get("RADARR", "API_KEY", fallback="")
 
 
 # Vérifier que les clés API sont bien définies
