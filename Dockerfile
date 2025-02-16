@@ -9,7 +9,7 @@ COPY main.py /app/
 COPY config.ini /config/
 
 # Installer les dépendances
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir requests
 
 # Définir le volume pour la configuration
 VOLUME ["/config"]
