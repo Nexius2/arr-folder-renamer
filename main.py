@@ -1,35 +1,61 @@
 # -*- coding: utf-8 -*-
 
 import os
+import configparser
 import logging
 from logging.handlers import RotatingFileHandler
 #from datetime import datetime
 import requests
 
-
-# Charger les variables d'environnement
-RUN_SONARR = os.getenv("RUN_SONARR", "True").lower() == "true" # Activer/désactiver le traitement des séries Sonarr
-RUN_RADARR = os.getenv("RUN_RADARR", "True").lower() == "true" # Activer/désactiver le traitement des films Radarr
-WORK_LIMIT = int(os.getenv("WORK_LIMIT", "10")) # Limiter le nombre de modifications (0 pour illimité)
-DRY_RUN = os.getenv("DRY_RUN", "False").lower() == "true" # Mode simulation (True = pas de modifications réelles)
- 
-# Paramètres Sonarr
-SONARR_URL = os.getenv("SONARR_URL", "http://localhost:8989") # URL de votre instance Sonarr
-SONARR_API_KEY = os.getenv("SONARR_API_KEY", "") # Clé API de Sonarr
-# Paramètres Radarr
-RADARR_URL = os.getenv("RADARR_URL", "http://localhost:7878") # URL de votre instance Radarr
-RADARR_API_KEY = os.getenv("RADARR_API_KEY", "") # Clé API de Radarr
-
-LOG_DIR = os.getenv("LOG_DIR", "/logs")
+# Définition des chemins de configuration et de logs
+CONFIG_PATH = "/config/config.ini"
+LOG_DIR = "/config/logs"
 os.makedirs(LOG_DIR, exist_ok=True)
+
+# Création du fichier de configuration s'il n'existe pas
+def create_default_config():
+    config = configparser.ConfigParser()
+    config["SETTINGS"] = {
+        "RUN_SONARR": "True",
+        "RUN_RADARR": "True",
+        "WORK_LIMIT": "10",
+        "DRY_RUN": "False"
+    }
+    config["SONARR"] = {
+        "URL": "http://localhost:8989",
+        "API_KEY": ""
+    }
+    config["RADARR"] = {
+        "URL": "http://localhost:7878",
+        "API_KEY": ""
+    }
+    with open(CONFIG_PATH, "w") as configfile:
+        config.write(configfile)
+
+# Charger la configuration
+def load_config():
+    if not os.path.exists(CONFIG_PATH):
+        create_default_config()
+    config = configparser.ConfigParser()
+    config.read(CONFIG_PATH)
+    return config
+
+config = load_config()
 
 # Vérifier que les clés API sont bien définies
 if not SONARR_API_KEY or not RADARR_API_KEY:
     raise ValueError("Les clés API SONARR_API_KEY et RADARR_API_KEY doivent être définies dans les variables d'environnement.")
 
+# Charger les paramètres
+RUN_SONARR = config.getboolean("SETTINGS", "RUN_SONARR")
+RUN_RADARR = config.getboolean("SETTINGS", "RUN_RADARR")
+WORK_LIMIT = config.getint("SETTINGS", "WORK_LIMIT")
+DRY_RUN = config.getboolean("SETTINGS", "DRY_RUN")
 
-
-
+SONARR_URL = config.get("SONARR", "URL")
+SONARR_API_KEY = config.get("SONARR", "API_KEY")
+RADARR_URL = config.get("RADARR", "URL")
+RADARR_API_KEY = config.get("RADARR", "API_KEY")
 
 
 
@@ -84,7 +110,7 @@ def update_radarr_path(original_path, imdb_id, tmdb_id):
     return new_path
 
 # Initialisation du main_logger
-def process_sonarr(sonarr_url, api_key, main_logger, debug_logger, dry_run, work_limit):
+def process_sonarr(sonarr_url, api_key, main_logger, dry_run, work_limit):
     headers = {"Content-Type": "application/json", "X-Api-Key": api_key}
     
     # Récupérer toutes les séries
@@ -105,7 +131,7 @@ def process_sonarr(sonarr_url, api_key, main_logger, debug_logger, dry_run, work
         tvdb_id = series.get("tvdbId")
         imdb_id = series.get("imdbId")
         series_id = series.get("id")
-        debug_logger.debug(f"Title: {title}: Year: {year}")
+        main_logger.debug(f"Title: {title}: Year: {year}")
         
         # Vérifier si IMDB ou TVDB est manquant dans le path
         if (
@@ -157,14 +183,14 @@ def process_sonarr(sonarr_url, api_key, main_logger, debug_logger, dry_run, work
                             main_logger.error(
                                 f"Série {title} ({series_id}) : Échec de la mise à jour du chemin. Détails: {error_details}"
                             )
-                            debug_logger.debug(f"Payload envoyé pour {title}: {payload}")
-                            debug_logger.debug(f"Réponse complete: {response_update.text}")
+                            main_logger.debug(f"Payload envoyé pour {title}: {payload}")
+                            main_logger.debug(f"Réponse complete: {response_update.text}")
                             
                     except Exception as e:
                         main_logger.error(
                             f"Série {title} ({series_id}) : Erreur lors de la requête PUT. Détails: {str(e)}"
                         )
-                        debug_logger.debug(f"Erreur complete: {str(e)}")
+                        main_logger.debug(f"Erreur complete: {str(e)}")
                 
                 modified_count += 1
                 
@@ -173,7 +199,7 @@ def process_sonarr(sonarr_url, api_key, main_logger, debug_logger, dry_run, work
                     return
             
             # Log détaillé pour debug.log
-            debug_logger.debug(
+            main_logger.debug(
                 f"Série {title} ({series_id}) - Ancien path: '{path}', Nouveau path: '{new_path}'"
             )
     
@@ -183,7 +209,7 @@ def process_sonarr(sonarr_url, api_key, main_logger, debug_logger, dry_run, work
 
 
 # Fonction pour traiter les films avec Radarr
-def process_radarr(radarr_url, api_key, main_logger, debug_logger, dry_run, work_limit):
+def process_radarr(radarr_url, api_key, main_logger, dry_run, work_limit):
     headers = {"Content-Type": "application/json", "X-Api-Key": api_key}
     
     # Récupérer tous les films
@@ -252,41 +278,24 @@ def process_radarr(radarr_url, api_key, main_logger, debug_logger, dry_run, work
                     return
             
             # Log détaillé pour debug.log
-            debug_logger.debug(
+            main_logger.debug(
                 f"Film {title} ({movie_id}) - Ancien path: '{path}', Nouveau path: '{new_path}'"
             )
     
     main_logger.info(f"Fin du traitement des films Radarr. Modifications effectuées: {modified_count}")
 
 
+
+# Configuration des logs
 def setup_logging():
-    # Configuration du logger principal (main.log)
+    log_file = os.path.join(LOG_DIR, "main.log")
     main_logger = logging.getLogger("main")
     main_logger.setLevel(logging.INFO)
-    main_handler = RotatingFileHandler(
-        "main.log",
-        maxBytes=1024*1024,
-        backupCount=5
-    )
+    main_handler = RotatingFileHandler(log_file, maxBytes=1024*1024, backupCount=5)
     formatter_main = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     main_handler.setFormatter(formatter_main)
     main_logger.addHandler(main_handler)
-    main_logger.propagate = False  # Empêche la propagation vers le logger par défaut
-
-    # Configuration du logger détaillé (debug.log)
-    debug_logger = logging.getLogger("debug")
-    debug_logger.setLevel(logging.DEBUG)
-    debug_handler = RotatingFileHandler(
-        "debug.log",
-        maxBytes=1024*1024,
-        backupCount=5
-    )
-    formatter_debug = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    debug_handler.setFormatter(formatter_debug)
-    debug_logger.addHandler(debug_handler)
-    debug_logger.propagate = False  # Empêche la propagation vers le logger par défaut
-
-    return main_logger, debug_logger
+    return main_logger
 
 
   
@@ -294,7 +303,7 @@ def setup_logging():
 # Fonction principale
 def main():
     # Initialisation des loggers
-    main_logger, debug_logger = setup_logging()
+    main_logger = setup_logging()
     
     # Vérifier les paramètres de configuration
     if not SONARR_API_KEY or not RADARR_API_KEY:
@@ -304,12 +313,12 @@ def main():
     # Traitement des séries Sonarr si activé
     if RUN_SONARR:
         main_logger.info("Démarrage du traitement des séries Sonarr...")
-        process_sonarr(SONARR_URL, SONARR_API_KEY, main_logger, debug_logger, DRY_RUN, WORK_LIMIT)
+        process_sonarr(SONARR_URL, SONARR_API_KEY, main_logger, DRY_RUN, WORK_LIMIT)
     
     # Traitement des films Radarr si activé
     if RUN_RADARR:
         main_logger.info("Démarrage du traitement des films Radarr...")
-        process_radarr(RADARR_URL, RADARR_API_KEY, main_logger, debug_logger, DRY_RUN, WORK_LIMIT)
+        process_radarr(RADARR_URL, RADARR_API_KEY, main_logger, DRY_RUN, WORK_LIMIT)
     
     main_logger.info("Fin du script.")
 

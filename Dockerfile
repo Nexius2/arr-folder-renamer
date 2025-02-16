@@ -5,20 +5,14 @@ FROM python:3.10-slim
 WORKDIR /app
 
 # Copier le script et les fichiers nécessaires
-COPY main.py requirements.txt /app/
+COPY main.py /app/
+COPY config.ini /config/
 
 # Installer les dépendances
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Définir les variables d'environnement pour la configuration
-ENV RUN_SONARR=True \
-    RUN_RADARR=True \
-    WORK_LIMIT=10 \
-    DRY_RUN=False \
-    SONARR_URL=http://192.168.1.80:8989 \
-    SONARR_API_KEY=xxxxxxx \
-    RADARR_URL=http://192.168.1.80:7878 \
-    RADARR_API_KEY=yyyyyyy
+# Définir le volume pour la configuration
+VOLUME ["/config"]
 
 # Lancer le script
 CMD ["python", "main.py"]
