@@ -42,9 +42,6 @@ def load_config():
 
 config = load_config()
 
-# Vérifier que les clés API sont bien définies
-if not SONARR_API_KEY or not RADARR_API_KEY:
-    raise ValueError("Les clés API SONARR_API_KEY et RADARR_API_KEY doivent être définies dans les variables d'environnement.")
 
 # Charger les paramètres
 RUN_SONARR = config.getboolean("SETTINGS", "RUN_SONARR")
@@ -56,8 +53,13 @@ SONARR_URL = config.get("SONARR", "URL")
 SONARR_API_KEY = config.get("SONARR", "API_KEY")
 RADARR_URL = config.get("RADARR", "URL")
 RADARR_API_KEY = config.get("RADARR", "API_KEY")
+except Exception as e:
+    print(f"Erreur lors du chargement de la configuration: {e}")
+    exit(1)
 
-
+# Vérifier que les clés API sont bien définies
+if not SONARR_API_KEY or not RADARR_API_KEY:
+    raise ValueError("Les clés API SONARR_API_KEY et RADARR_API_KEY doivent être définies dans les variables d'environnement.")
 
 def update_sonarr_path(original_path, imdb_id, tvdb_id):
     # Si aucun ID n'est disponible, ne pas modifier le path
